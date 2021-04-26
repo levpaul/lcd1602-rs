@@ -33,44 +33,46 @@ where
     }
 
     pub fn command(&mut self, cmd: u8) {
-        self.st.delay(1); // per char delay
+        self.st.delay(3); // per char delay
         self.rs.set_low();
-        self.en.set_low();
+        // self.write4(cmd & 0x0F); // 4bit writes send end pulses
+        // self.write4(cmd & 0xF0);
+        self.write4((cmd & 0xF0) >> 4);
         self.write4(cmd & 0x0F); // 4bit writes send end pulses
-        self.write4(cmd & 0xF0);
-    }
-
-    fn write4(&mut self, data: u8) {
-        if data & 0x1 == 0x1 {
-            self.d4.set_high();
-        } else {
-            self.d4.set_low();
-        };
-        if data & 0x2 == 0x2 {
-            self.d5.set_high();
-        } else {
-            self.d5.set_low();
-        };
-        if data & 0x4 == 0x4 {
-            self.d6.set_high();
-        } else {
-            self.d6.set_low();
-        };
-        if data & 0x8 == 0x8 {
-            self.d7.set_high();
-        } else {
-            self.d7.set_low();
-        };
-        self.en.set_high();
-        self.en.set_low();
     }
 
     pub fn write_char(&mut self, ch: u8) {
-        self.st.delay(1); // per char delay
-        self.rs.set_low();
-        self.en.set_low();
+        log::info!("Writing char");
+        self.st.delay(3); // per char delay
+        self.rs.set_high();
         self.write4(ch & 0x0F); // 4bit writes send end pulses
-        self.write4(ch & 0xF0);
+        self.write4((ch & 0xF0) >> 4);
+    }
+
+    fn write4(&mut self, data: u8) {
+        self.en.set_low();
+        if (data & 0x1) > 0 {
+            self.d4.set_high();
+        } else {
+            self.d4.set_low();
+        }
+        if (data & 0x2) > 0 {
+            self.d5.set_high();
+        } else {
+            self.d5.set_low();
+        }
+        if (data & 0x4) > 0 {
+            self.d6.set_high();
+        } else {
+            self.d6.set_low();
+        }
+        if (data & 0x8) > 0 {
+            self.d7.set_high();
+        } else {
+            self.d7.set_low();
+        }
+        self.en.set_high();
+        self.en.set_low();
     }
 
     pub fn delay(&mut self, interval_ms: u32) {
