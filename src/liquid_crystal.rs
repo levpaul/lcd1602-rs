@@ -1,19 +1,79 @@
-// use pads;
-// use teensy4_bsp as bsp;
+use embedded_hal::digital::v2::OutputPin;
+use teensy4_bsp::SysTick;
 
-// pub fn init(mut st: bsp::SysTick, pins: bsp::t40::Pins, en: pads) {
-//     // const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
-//     // LiquidCrystalFast lcd(rs, 255, en, d4, d5, d6, d7);
-//
-//     let rs = pins.p12;
-//     let en = pins.p11;
-//
-//     let d4 = pins.p5;
-//     let d5 = pins.p4;
-//     let d6 = pins.p3;
-//     let d7 = pins.p2;
-//
-//     log::info!("Wtf");
-//     st.delay(2000);
-//     log::info!("lel");
-// }
+pub struct LCD<'a, A, B, C, D, E, F> {
+    pub en: &'a mut A,
+    pub rs: &'a mut B,
+    pub d4: &'a mut C,
+    pub d5: &'a mut D,
+    pub d6: &'a mut E,
+    pub d7: &'a mut F,
+    pub st: &'a mut SysTick,
+}
+
+impl<'a, A, B, C, D, E, F> LCD<'a, A, B, C, D, E, F>
+where
+    A: OutputPin,
+    B: OutputPin,
+    C: OutputPin,
+    D: OutputPin,
+    E: OutputPin,
+    F: OutputPin,
+{
+    pub fn init(&mut self) {
+        self.st.delay(50);
+        self.command(0x00);
+        self.st.delay(5);
+        self.write4(0x03);
+        self.write4(0x02);
+
+        self.command(0x0C); // Display mode
+        self.command(0x01); // Clear
+        self.command(0x06); // Entrymode
+    }
+
+    pub fn command(&mut self, cmd: u8) {
+        self.st.delay(1); // per char delay
+        self.rs.set_low();
+        self.en.set_low();
+        self.write4(cmd & 0x0F); // 4bit writes send end pulses
+        self.write4(cmd & 0xF0);
+    }
+
+    fn write4(&mut self, data: u8) {
+        if data & 0x1 == 0x1 {
+            self.d4.set_high();
+        } else {
+            self.d4.set_low();
+        };
+        if data & 0x2 == 0x2 {
+            self.d5.set_high();
+        } else {
+            self.d5.set_low();
+        };
+        if data & 0x4 == 0x4 {
+            self.d6.set_high();
+        } else {
+            self.d6.set_low();
+        };
+        if data & 0x8 == 0x8 {
+            self.d7.set_high();
+        } else {
+            self.d7.set_low();
+        };
+        self.en.set_high();
+        self.en.set_low();
+    }
+
+    pub fn write_char(&mut self, ch: u8) {
+        self.st.delay(1); // per char delay
+        self.rs.set_low();
+        self.en.set_low();
+        self.write4(ch & 0x0F); // 4bit writes send end pulses
+        self.write4(ch & 0xF0);
+    }
+
+    pub fn delay(&mut self, interval_ms: u32) {
+        self.st.delay(interval_ms);
+    }
+}
