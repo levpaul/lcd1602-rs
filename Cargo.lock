@@ -282,7 +282,9 @@ dependencies = [
  "cortex-m 0.6.7",
  "cortex-m-rt",
  "embedded-hal",
+ "imxrt-hal",
  "log",
+ "nb 1.0.0",
  "teensy4-bsp",
  "teensy4-panic",
 ]
