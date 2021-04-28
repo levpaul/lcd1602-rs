@@ -1,25 +1,28 @@
+use core::time::Duration;
 use embedded_hal::digital::v2::OutputPin;
-use imxrt_hal::gpt::GPT;
-use teensy4_bsp::SysTick;
+use embedded_hal::timer::CountDown;
+use nb::block;
 
-pub struct LCD<'a, A, B, C, D, E, F> {
-    pub en: &'a mut A,
-    pub rs: &'a mut B,
-    pub d4: &'a mut C,
-    pub d5: &'a mut D,
-    pub d6: &'a mut E,
-    pub d7: &'a mut F,
-    pub gpt: &'a mut GPT,
+pub struct LCD<'a, EnablePin, RegisterSelPin, Digi4Pin, Digi5Pin, Digi6Pin, Digi7Pin, Timer> {
+    pub en: &'a mut EnablePin,
+    pub rs: &'a mut RegisterSelPin,
+    pub d4: &'a mut Digi4Pin,
+    pub d5: &'a mut Digi5Pin,
+    pub d6: &'a mut Digi6Pin,
+    pub d7: &'a mut Digi7Pin,
+    pub timer: &'a mut Timer,
 }
 
-impl<'a, A, B, C, D, E, F> LCD<'a, A, B, C, D, E, F>
+impl<'a, EnablePin, RegisterSelPin, Digi4Pin, Digi5Pin, Digi6Pin, Digi7Pin, Timer>
+    LCD<'a, EnablePin, RegisterSelPin, Digi4Pin, Digi5Pin, Digi6Pin, Digi7Pin, Timer>
 where
-    A: OutputPin,
-    B: OutputPin,
-    C: OutputPin,
-    D: OutputPin,
-    E: OutputPin,
-    F: OutputPin,
+    EnablePin: OutputPin,
+    RegisterSelPin: OutputPin,
+    Digi4Pin: OutputPin,
+    Digi5Pin: OutputPin,
+    Digi6Pin: OutputPin,
+    Digi7Pin: OutputPin,
+    Timer: CountDown<Time = Duration>,
 {
     pub fn init(&mut self) {
         self.delay(50000);
@@ -40,8 +43,6 @@ where
     pub fn command(&mut self, cmd: u8) {
         self.delay(320); // per char delay
         self.rs.set_low();
-        // self.write4(cmd & 0x0F); // 4bit writes send end pulses
-        // self.write4(cmd & 0xF0);
         self.write4((cmd & 0xF0) >> 4);
         self.write4(cmd & 0x0F); // 4bit writes send end pulses
     }
@@ -49,8 +50,8 @@ where
     pub fn write_char(&mut self, ch: u8) {
         self.delay(320); // per char delay
         self.rs.set_high();
-        self.write4(ch & 0x0F); // 4bit writes send end pulses
         self.write4((ch & 0xF0) >> 4);
+        self.write4(ch & 0x0F); // 4bit writes send end pulses
     }
 
     fn write4(&mut self, data: u8) {
@@ -81,21 +82,7 @@ where
     }
 
     pub fn delay(&mut self, interval_us: u64) {
-        self.gpt.set_output_compare_duration(
-            imxrt_hal::gpt::OutputCompareRegister::Three,
-            core::time::Duration::from_micros(interval_us),
-        );
-        loop {
-            let mut res = self
-                .gpt
-                .output_compare_status(imxrt_hal::gpt::OutputCompareRegister::Three);
-            if res.is_set() {
-                res.clear();
-                return;
-            }
-        }
+        self.timer.start(Duration::from_micros(interval_us));
+        block!(self.timer.wait());
     }
-    // pub fn delay(&mut self, interval_ms: u32) {
-    //     self.st.delay(interval_ms);
-    // }
 }
