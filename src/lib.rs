@@ -1,30 +1,53 @@
+#![no_std]
 use core::time::Duration;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
+use error::Result;
 use nb::block;
 
-pub struct LCD<'a, EnablePin, RegisterSelPin, Digi4Pin, Digi5Pin, Digi6Pin, Digi7Pin, Timer> {
-    pub en: &'a mut EnablePin,
-    pub rs: &'a mut RegisterSelPin,
-    pub d4: &'a mut Digi4Pin,
-    pub d5: &'a mut Digi5Pin,
-    pub d6: &'a mut Digi6Pin,
-    pub d7: &'a mut Digi7Pin,
+pub struct LCD1602<'a, EN, RS, D4, D5, D6, D7, Timer> {
+    pub en: &'a mut EN,
+    pub rs: &'a mut RS,
+    pub d4: &'a mut D4,
+    pub d5: &'a mut D5,
+    pub d6: &'a mut D6,
+    pub d7: &'a mut D7,
     pub timer: &'a mut Timer,
 }
 
-impl<'a, EnablePin, RegisterSelPin, Digi4Pin, Digi5Pin, Digi6Pin, Digi7Pin, Timer>
-    LCD<'a, EnablePin, RegisterSelPin, Digi4Pin, Digi5Pin, Digi6Pin, Digi7Pin, Timer>
+impl<'a, EN, RS, D4, D5, D6, D7, Timer> LCD1602<'a, EN, RS, D4, D5, D6, D7, Timer>
 where
-    EnablePin: OutputPin,
-    RegisterSelPin: OutputPin,
-    Digi4Pin: OutputPin,
-    Digi5Pin: OutputPin,
-    Digi6Pin: OutputPin,
-    Digi7Pin: OutputPin,
+    EN: OutputPin,
+    RS: OutputPin,
+    D4: OutputPin,
+    D5: OutputPin,
+    D6: OutputPin,
+    D7: OutputPin,
     Timer: CountDown<Time = Duration>,
 {
-    pub fn init(&mut self) {
+    pub fn new(
+        en: &mut EN,
+        rs: &mut RS,
+        d4: &mut D4,
+        d5: &mut D5,
+        d6: &mut D6,
+        d7: &mut D7,
+        timer: &mut Timer,
+    ) -> Result<LCD1602<'a, EN, RS, D4, D5, D6, D7, Timer>> {
+        let mut lcd = LCD1602 {
+            en,
+            rs,
+            d4,
+            d5,
+            d6,
+            d7,
+            timer,
+        };
+        lcd.init()?;
+        return Ok(lcd);
+    }
+
+    fn init(&mut self) -> Result<()> {
         self.delay(50000);
         self.command(0x00); //4 bit shuffle
         self.delay(150);
@@ -38,6 +61,7 @@ where
         self.command(0x01); // Clear
         self.delay(2900); // Delay per homing
         self.command(0x06); // Entrymode
+        Ok(())
     }
 
     pub fn command(&mut self, cmd: u8) {

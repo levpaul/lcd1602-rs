@@ -8,10 +8,25 @@ categories = ["embedded", "hardware-support", "no-std"]
 description = "A crate to drive a 1602 LCD via an embedded-hal implementation"
 license = "MIT"
 repository = "https://github.com/levpaul/lcd1602-rs"
+
 documentation = "TODO"
 readme = "TODO"
 
 [dependencies]
-embedded-hal = "0.2.5"
+cortex-m = "0.6.2"
+cortex-m-rt = "0.6.13"
+embedded-hal = "0.2.3"
+# Remove me if you don't want logging
+log = "0.4.11"
+teensy4-panic = "0.2.0"
+imxrt-hal = "0.4.4"
 nb = "1.0.0"
 
+[dependencies.teensy4-bsp]
+version = "0.2"
+features = ["rt"]
+
+# Don't optimize build dependencies, like proc macros.
+# Helps with build times.
+[profile.release.build-override]
+opt-level = 0
