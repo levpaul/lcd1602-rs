@@ -2,20 +2,24 @@
 use core::time::Duration;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
-use error::Result;
 use nb::block;
 
-pub struct LCD1602<'a, EN, RS, D4, D5, D6, D7, Timer> {
-    pub en: &'a mut EN,
-    pub rs: &'a mut RS,
-    pub d4: &'a mut D4,
-    pub d5: &'a mut D5,
-    pub d6: &'a mut D6,
-    pub d7: &'a mut D7,
-    pub timer: &'a mut Timer,
+#[derive(Debug)]
+pub struct Error;
+// LCDInitError,
+// }
+
+pub struct LCD1602<EN, RS, D4, D5, D6, D7, Timer> {
+    en: EN,
+    rs: RS,
+    d4: D4,
+    d5: D5,
+    d6: D6,
+    d7: D7,
+    timer: Timer,
 }
 
-impl<'a, EN, RS, D4, D5, D6, D7, Timer> LCD1602<'a, EN, RS, D4, D5, D6, D7, Timer>
+impl<EN, RS, D4, D5, D6, D7, Timer> LCD1602<EN, RS, D4, D5, D6, D7, Timer>
 where
     EN: OutputPin,
     RS: OutputPin,
@@ -26,14 +30,15 @@ where
     Timer: CountDown<Time = Duration>,
 {
     pub fn new(
-        en: &mut EN,
-        rs: &mut RS,
-        d4: &mut D4,
-        d5: &mut D5,
-        d6: &mut D6,
-        d7: &mut D7,
-        timer: &mut Timer,
-    ) -> Result<LCD1602<'a, EN, RS, D4, D5, D6, D7, Timer>> {
+        en: EN,
+        rs: RS,
+        d4: D4,
+        d5: D5,
+        d6: D6,
+        d7: D7,
+        timer: Timer,
+    ) -> LCD1602<EN, RS, D4, D5, D6, D7, Timer> {
+        // ) -> Result<LCD1602<EN, RS, D4, D5, D6, D7, Timer>, Error> {
         let mut lcd = LCD1602 {
             en,
             rs,
@@ -43,11 +48,11 @@ where
             d7,
             timer,
         };
-        lcd.init()?;
-        return Ok(lcd);
+        lcd.init();
+        return lcd;
     }
 
-    fn init(&mut self) -> Result<()> {
+    fn init(&mut self) -> Result<(), Error> {
         self.delay(50000);
         self.command(0x00); //4 bit shuffle
         self.delay(150);

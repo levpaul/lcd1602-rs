@@ -1,13 +1,10 @@
 #![no_std]
 #![no_main]
 #![allow(unused_must_use)]
-
+use lcd1602_rs::LCD1602;
 use teensy4_bsp as bsp;
 use teensy4_bsp::hal::gpio;
 use teensy4_panic as _;
-
-mod liquid_crystal;
-mod logging;
 
 #[cortex_m_rt::entry]
 fn main() -> ! {
@@ -15,16 +12,13 @@ fn main() -> ! {
     let pins = bsp::t40::into_pins(p.iomuxc);
     let mut led = bsp::configure_led(pins.p13);
 
-    // See the `logging` module docs for more info.
-    assert!(logging::init().is_ok());
-
     // Init pins
-    let mut rs = gpio::GPIO::new(pins.p12).output();
-    let mut en = gpio::GPIO::new(pins.p11).output();
-    let mut d4 = gpio::GPIO::new(pins.p5).output();
-    let mut d5 = gpio::GPIO::new(pins.p4).output();
-    let mut d6 = gpio::GPIO::new(pins.p3).output();
-    let mut d7 = gpio::GPIO::new(pins.p2).output();
+    let rs = gpio::GPIO::new(pins.p12).output();
+    let en = gpio::GPIO::new(pins.p11).output();
+    let d4 = gpio::GPIO::new(pins.p5).output();
+    let d5 = gpio::GPIO::new(pins.p4).output();
+    let d6 = gpio::GPIO::new(pins.p3).output();
+    let d7 = gpio::GPIO::new(pins.p2).output();
 
     // General Purpose Timer setup
     let (_, ipg_hz) =
@@ -41,19 +35,10 @@ fn main() -> ! {
     gpt1.set_mode(imxrt_hal::gpt::Mode::FreeRunning);
     gpt1.set_reset_on_enable(true);
     gpt1.set_enable(true);
+    let mut t = gpt1.count_down(imxrt_hal::gpt::OutputCompareRegister::Three);
 
     // LCD Init
-    log::info!("Initializing LCD");
-    let mut lcd = liquid_crystal::LCD {
-        en: &mut en,
-        rs: &mut rs,
-        d4: &mut d4,
-        d5: &mut d5,
-        d6: &mut d6,
-        d7: &mut d7,
-        timer: &mut gpt1.count_down(imxrt_hal::gpt::OutputCompareRegister::Three),
-    };
-    lcd.init();
+    let mut lcd = LCD1602::new(en, rs, d4, d5, d6, d7, t);
 
     for ch in "Hello world!".chars() {
         lcd.write_char(ch as u8);
@@ -61,6 +46,6 @@ fn main() -> ! {
 
     loop {
         led.toggle();
-        lcd.delay(1_000_000);
+        lcd.delay(1_000_000 as u64);
     }
 }
