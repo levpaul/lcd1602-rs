@@ -1,6 +1,8 @@
 use crate::error::Error;
 use crate::LCD1602;
 
+use crate::error::Error::UnsupportedBusWidth;
+use crate::lcd1602::BusWidth::FourBits;
 use crate::lcd1602::Direction::RightToLeft;
 use core::time::Duration;
 use embedded_hal::digital::v2::OutputPin;
@@ -44,11 +46,7 @@ where
 
     fn init(&mut self) -> Result<(), Error<E>> {
         self.delay(50000)?;
-        self.command(0x00)?; //4 bit shuffle
-        self.delay(150)?;
-        self.send(0x03)?;
-        self.delay(150)?;
-        self.send(0x02)?;
+        self.set_bus_width(FourBits)?;
 
         self.command(0x0C)?; // Display mode
         self.clear()?;
@@ -56,6 +54,15 @@ where
         Ok(())
     }
 
+    pub fn set_bus_width(&mut self, bus_width: BusWidth) -> Result<(), Error<E>> {
+        match bus_width {
+            FourBits => {
+                self.write_bus(0x02)?;
+                self.delay(39)
+            }
+            _ => Err(UnsupportedBusWidth),
+        }
+    }
     pub fn set_entry_mode(
         &mut self,
         text_direction: Direction,
@@ -105,29 +112,29 @@ where
     }
 
     fn command(&mut self, cmd: u8) -> Result<(), Error<E>> {
-        self.delay(320)?; // per char delay
+        // self.delay(320)?; // per command delay - TODO: move this to separate commands
         self.rs.set_low()?;
-        self.send((cmd & 0xF0) >> 4)?;
-        self.send(cmd & 0x0F)?; // 4bit writes send end pulses
+        self.write_bus((cmd & 0xF0) >> 4)?;
+        self.write_bus(cmd & 0x0F)?; // 4bit writes send end pulses
         Ok(())
     }
 
-    fn write(&mut self, ch: u8) -> Result<(), Error<E>> {
+    fn write_char(&mut self, ch: u8) -> Result<(), Error<E>> {
         self.rs.set_high()?;
-        self.send((ch & 0xF0) >> 4)?;
-        self.send(ch & 0x0F)?; // 4bit writes send end pulses
+        self.write_bus((ch & 0xF0) >> 4)?;
+        self.write_bus(ch & 0x0F)?; // 4bit writes send end pulses
         Ok(())
     }
 
     pub fn print(&mut self, s: &str) -> Result<(), Error<E>> {
         for ch in s.chars() {
             self.delay(320)?; // per char delay
-            self.write(ch as u8)?;
+            self.write_char(ch as u8)?;
         }
         Ok(())
     }
 
-    fn send(&mut self, data: u8) -> Result<(), Error<E>> {
+    fn write_bus(&mut self, data: u8) -> Result<(), Error<E>> {
         self.en.set_low()?;
         match (data & 0x1) > 0 {
             true => self.d4.set_high()?,
@@ -163,4 +170,10 @@ where
 pub enum Direction {
     LeftToRight,
     RightToLeft,
+}
+
+#[derive(PartialEq)]
+pub enum BusWidth {
+    FourBits,
+    EightBits,
 }

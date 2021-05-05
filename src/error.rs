@@ -4,6 +4,7 @@ pub enum Error<GPIO> {
     TimerError,
     InvalidAddr,
     InvalidCursorPos,
+    UnsupportedBusWidth,
 }
 
 impl<E> From<E> for Error<E> {
