@@ -35,10 +35,10 @@ fn main() -> ! {
     gpt1.set_mode(imxrt_hal::gpt::Mode::FreeRunning);
     gpt1.set_reset_on_enable(true);
     gpt1.set_enable(true);
-    let mut t = gpt1.count_down(imxrt_hal::gpt::OutputCompareRegister::Three);
+    let t = gpt1.count_down(imxrt_hal::gpt::OutputCompareRegister::Three);
 
     // LCD Init
-    let mut lcd = LCD1602::new(en, rs, d4, d5, d6, d7, t);
+    let mut lcd = LCD1602::new(en, rs, d4, d5, d6, d7, t).unwrap();
 
     for ch in "Hello world!".chars() {
         lcd.write_char(ch as u8);
