@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![allow(unused_must_use)]
 use lcd1602_rs::LCD1602;
 use teensy4_bsp as bsp;
 use teensy4_bsp::hal::gpio;
@@ -40,12 +39,19 @@ fn main() -> ! {
     // LCD Init
     let mut lcd = LCD1602::new(en, rs, d4, d5, d6, d7, t).unwrap();
 
-    for ch in "Hello world!".chars() {
-        lcd.write_char(ch as u8);
-    }
-
     loop {
+        lcd.print("h").ok();
+        lcd.set_cursor(0, 2).ok();
+        lcd.print("o").ok();
+        lcd.set_cursor(1, 4).ok();
+        lcd.print("h").ok();
+        lcd.set_cursor(1, 6).ok();
+        lcd.print("o").ok();
+
         led.toggle();
-        lcd.delay(1_000_000 as u64);
+        lcd.delay(1_000_000 as u64).ok();
+        led.toggle();
+        lcd.clear().ok();
+        lcd.delay(1_000_000 as u64).ok();
     }
 }
