@@ -40,14 +40,7 @@ fn main() -> ! {
     let mut lcd = LCD1602::new(en, rs, d4, d5, d6, d7, t).unwrap();
 
     loop {
-        lcd.print("h").ok();
-        lcd.set_cursor(0, 2).ok();
-        lcd.print("o").ok();
-        lcd.set_cursor(1, 4).ok();
-        lcd.print("h").ok();
-        lcd.set_cursor(1, 6).ok();
-        lcd.print("o").ok();
-
+        lcd.print("hello world!").ok();
         led.toggle();
         lcd.delay(1_000_000 as u64).ok();
         led.toggle();

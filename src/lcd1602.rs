@@ -89,30 +89,7 @@ where
         self.delay(1530)
     }
 
-    pub fn set_cgram_addr(&mut self, addr: u8) -> Result<(), Error<E>> {
-        match addr >> 5 > 0 {
-            true => Err(Error::InvalidAddr),
-            false => self.command(0x04 + addr),
-        }
-    }
-
-    fn set_ddram_addr(&mut self, addr: u8) -> Result<(), Error<E>> {
-        match addr & 0x80 > 0 {
-            true => Err(Error::InvalidAddr),
-            false => self.command(0x80 + addr),
-        }
-    }
-
-    pub fn set_cursor(&mut self, col: u8, row: u8) -> Result<(), Error<E>> {
-        if col > MAX_COLS || row > MAX_ROWS {
-            return Err(Error::InvalidCursorPos);
-        }
-        self.set_ddram_addr(col * 0x40 + row)?;
-        self.delay(39)
-    }
-
     fn command(&mut self, cmd: u8) -> Result<(), Error<E>> {
-        // self.delay(320)?; // per command delay - TODO: move this to separate commands
         self.rs.set_low()?;
         self.write_bus((cmd & 0xF0) >> 4)?;
         self.write_bus(cmd & 0x0F)?; // 4bit writes send end pulses
