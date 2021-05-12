@@ -1,3 +1,6 @@
+//! # lcd1602_rs
+//!
+//! `lcd1602_rs` is a simple embedded-hal driver for a 1602 LCD screen
 #![no_std]
 mod error;
 mod lcd1602;

@@ -9,9 +9,6 @@ use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::timer::CountDown;
 use nb::block;
 
-const MAX_ROWS: u8 = 2;
-const MAX_COLS: u8 = 16;
-
 impl<EN, RS, D4, D5, D6, D7, Timer, E> LCD1602<EN, RS, D4, D5, D6, D7, Timer>
 where
     EN: OutputPin<Error = E>,
