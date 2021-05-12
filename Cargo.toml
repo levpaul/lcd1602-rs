@@ -8,7 +8,7 @@ categories = ["embedded", "hardware-support", "no-std"]
 description = "A crate to drive a 1602 LCD via an embedded-hal implementation"
 license = "MIT"
 repository = "https://github.com/levpaul/lcd1602-rs"
-readme = "https://github.com/levpaul/lcd1602-rs/README.md"
+readme = "README.md"
 
 [dependencies]
 embedded-hal = "0.2.5"
