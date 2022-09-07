@@ -1,7 +1,7 @@
 use crate::error::Error;
 use crate::LCD1602;
 
-use crate::error::Error::UnsupportedBusWidth;
+use crate::error::Error::{InvalidCursorPos, UnsupportedBusWidth};
 use crate::lcd1602::BusWidth::FourBits;
 use crate::lcd1602::Direction::RightToLeft;
 use core::time::Duration;
@@ -76,6 +76,24 @@ where
         self.delay(39)
     }
 
+    pub fn set_position(
+        &mut self,
+        x: u8,
+        y: u8
+    ) -> Result<(), Error<E>> {
+        match (x,y) {
+            (0..=15, 0) => {
+                self.command(0x80 | x)?;
+                self.delay(1530)
+            },
+            (0..=15, 1) => {
+                self.command(0x80 | (x + 0x40))?;
+                self.delay(1530)
+            },
+            _ => Err(InvalidCursorPos)
+        }
+    }
+
     pub fn clear(&mut self) -> Result<(), Error<E>> {
         self.command(0x01)?;
         self.delay(1530)
@@ -105,7 +123,7 @@ where
             self.delay(320)?; // per char delay
             self.write_char(ch as u8)?;
         }
-        Ok(())
+        self.delay(1530)
     }
 
     fn write_bus(&mut self, data: u8) -> Result<(), Error<E>> {
