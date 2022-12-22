@@ -12,5 +12,6 @@ readme = "README.md"
 
 [dependencies]
 embedded-hal = "0.2.5"
+embedded-time = "0.12.1"
 nb = "1.0.0"
 
